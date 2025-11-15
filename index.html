@@ -1,319 +1,378 @@
-<!--
-Project: Bike Live Tracker — Single-page GitHub Pages app
-Files included in this single textdoc:
-  1) index.html  (main app)
-  2) README.md   (how to deploy)
-  3) .github/workflows/ping.yml  (optional GitHub Actions to ping the public sharing link)
-
-Copy each section to files in a public GitHub repo and enable GitHub Pages (branch `main`, root) to deploy.
--->
-
-==== index.html ====
 <!doctype html>
-<html lang="en">
+<html lang="bn">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>My Bike — Live Tracker Dashboard</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-xwE/ZXOtfw7g5wLFp2q3mZb4bK6Nf2xYhS9tQIAkP8o=" crossorigin=""/>
-  <style>
-    :root{--blue:#0b76ef;--muted:#666}
-    html,body,#app{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
-    header{background:linear-gradient(90deg,var(--blue),#136df0);color:#fff;padding:12px 16px;font-weight:700}
-    .container{display:flex;gap:12px;padding:12px}
-    .col{background:#fff;border-radius:10px;padding:12px;box-shadow:0 6px 18px rgba(10,10,10,0.06)}
-    .left{flex:0 0 420px}
-    .right{flex:1;min-height:520px}
-    label{display:block;font-size:0.85rem;color:var(--muted);margin-top:8px}
-    input[type=text],select{width:100%;padding:8px;border-radius:8px;border:1px solid #e6e9ee}
-    button{background:var(--blue);color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
-    .small{font-size:0.9rem}
-    #trackerFrame{width:100%;height:460px;border-radius:8px;border:1px solid #eee}
-    #map{height:520px;border-radius:8px}
-    .row{display:flex;gap:8px;margin-top:8px}
-    .hint{color:var(--muted);font-size:0.9rem;margin-top:8px}
-    .badge{display:inline-block;padding:6px 8px;border-radius:8px;background:#f2f7ff;color:var(--blue);font-weight:600}
-    footer{padding:10px;text-align:center;color:#666;font-size:0.9rem}
-    .fallback{padding:14px;text-align:center}
-    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-    .file{border:1px dashed #ddd;padding:8px;border-radius:8px}
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Bike Hacker Tracker — Live Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --muted:#9aa4b2; --accent:#00d1ff; --glass: rgba(255,255,255,0.03);
+  }
+  html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;background:linear-gradient(180deg,#071025 0%, #071426 70%);color:#e6eef8}
+  .wrap{max-width:1200px;margin:18px auto;padding:18px;display:grid;grid-template-columns:360px 1fr;gap:18px}
+  header{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-radius:12px;background:linear-gradient(90deg,#071a2b,#092235);box-shadow:0 6px 30px rgba(2,6,23,0.6)}
+  header h1{margin:0;font-size:1.05rem;letter-spacing:0.2px}
+  header .meta{font-size:0.85rem;color:var(--muted)}
+  .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:14px;border-radius:12px;box-shadow:0 8px 30px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.03)}
+  label{display:block;color:var(--muted);font-size:0.82rem;margin-bottom:8px}
+  input[type=text], select{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:#e6eef8}
+  .btn{display:inline-block;padding:9px 12px;border-radius:10px;background:linear-gradient(90deg,var(--accent),#037fff);color:#002; font-weight:700;border:0;cursor:pointer}
+  .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);padding:8px 10px;border-radius:8px}
+  .row{display:flex;gap:8px}
+  .small{font-size:0.85rem;color:var(--muted)}
+  #embedArea{height:360px;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,0.03)}
+  iframe{width:100%;height:100%;border:0}
+  #map{height:720px;border-radius:10px;border:1px solid rgba(255,255,255,0.03)}
+  .info{padding:10px;margin-top:10px;border-radius:8px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));font-size:0.9rem}
+  .stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
+  .stat{padding:8px;border-radius:8px;background:rgba(255,255,255,0.02);text-align:center}
+  .stat h3{margin:0;font-size:1.02rem}
+  .stat p{margin:0;color:var(--muted);font-size:0.82rem}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  footer{grid-column:1/-1;text-align:center;color:var(--muted);font-size:0.85rem;margin-top:12px}
+  a.link{color:var(--accent);text-decoration:none}
+  /* playback tiny */
+  .playback {display:flex;gap:8px;align-items:center}
+  .chip{display:inline-block;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.02);font-size:0.85rem;color:var(--muted)}
+  /* responsive */
+  @media (max-width:980px){ .wrap{grid-template-columns:1fr; padding:12px} header{flex-direction:column;gap:8px} #map{height:420px} #embedArea{height:240px} }
+</style>
 </head>
 <body>
-  <header>My Bike — Live Tracker Dashboard</header>
+<header>
+  <div><h1>Bike Hacker Tracker</h1><div class="small">Pro dashboard • single file</div></div>
+  <div class="meta">Made for you — keep sharing link private</div>
+</header>
 
-  <div class="container">
-    <div class="col left">
-      <div>
-        <label>Permanent tracking sharing link</label>
-        <input id="shareUrl" type="text" placeholder="Paste your sharing URL here (example: http://gps.francebangla.net/sharing/...)" />
-        <div class="row">
-          <button id="loadBtn">Load / Embed</button>
-          <button id="openBtn" style="background:#2dbe60">Open in new tab</button>
-          <button id="copyBtn" style="background:#444">Copy link</button>
-        </div>
-        <div class="hint">If the server blocks embedding or your repo is served over HTTPS and the share link is HTTP, the iframe will fall back to an <em>Open in new tab</em> button.</div>
-      </div>
-
-      <div style="margin-top:12px">
-        <label>Status</label>
-        <div class="row">
-          <div class="badge" id="statusBadge">Not checked</div>
-          <div style="flex:1"><small id="lastPing">—</small></div>
-        </div>
-        <div class="row" style="margin-top:8px">
-          <button id="pingBtn">Ping Link</button>
-          <button id="genQR">Generate QR</button>
-          <button id="addHome">Add to home-screen tip</button>
-        </div>
-      </div>
-
-      <div style="margin-top:12px">
-        <label>Quick Commands (SMS style)</label>
-        <div class="hint small">These are convenience buttons that copy the SMS commands that your tracker understands — send them from your phone to the tracker SIM.</div>
-        <div class="row" style="margin-top:8px">
-          <button data-cmd="URL#" class="cmd">Copy URL#</button>
-          <button data-cmd="G#" class="cmd">Copy G#</button>
-          <button data-cmd="check#" class="cmd">Copy check#</button>
-        </div>
-      </div>
-
-      <div style="margin-top:12px">
-        <label>Upload route CSV (lat,lng,timestamp)</label>
-        <input type="file" id="csvFile" accept="text/csv" />
-        <div class="hint">CSV columns: lat,lng,timestamp (timestamp optional). After upload, click "Show Heatmap".</div>
-        <div class="row" style="margin-top:8px">
-          <button id="showHeat">Show Heatmap</button>
-          <button id="clearMap" style="background:#ff6b6b">Clear</button>
-        </div>
-      </div>
-
-      <div style="margin-top:12px">
-        <label>Geofence simulator</label>
-        <div class="hint small">Draw a circle on the map and use the 'Test coords' button to simulate enter/exit events.</div>
-        <div class="row">
-          <input id="geoLat" type="text" placeholder="lat (e.g. 23.7964)" />
-          <input id="geoLng" type="text" placeholder="lng (e.g. 90.4361)" />
-          <input id="geoRad" type="text" placeholder="radius (meters)" />
-        </div>
-        <div class="row" style="margin-top:8px">
-          <button id="setFence">Set Fence</button>
-          <button id="testCoords">Test Coords</button>
-        </div>
-      </div>
-
+<div class="wrap">
+  <!-- LEFT CONTROLS -->
+  <div class="card">
+    <label>Permanent sharing link</label>
+    <input id="shareUrl" placeholder="http://.../sharing/xxxx" />
+    <div class="row" style="margin-top:10px">
+      <button id="loadBtn" class="btn">Load</button>
+      <button id="openBtn" class="btn-ghost">Open</button>
     </div>
 
-    <div class="col right">
-      <div id="embedArea">
-        <iframe id="trackerFrame" src="about:blank" title="Live tracker" sandbox></iframe>
+    <div style="margin-top:12px">
+      <label>Status & Auto refresh</label>
+      <div class="row">
+        <div id="statusBadge" class="chip">Not checked</div>
+        <div style="flex:1"><small id="lastPing" class="small">—</small></div>
       </div>
-      <div id="map" style="margin-top:12px"></div>
+      <div style="margin-top:8px" class="row">
+        <button id="pingBtn" class="btn-ghost">Ping</button>
+        <select id="interval" title="Refresh interval"><option value="10">10s</option><option value="20" selected>20s</option><option value="30">30s</option><option value="60">60s</option></select>
+        <button id="toggleAuto" class="btn">Auto: OFF</button>
+      </div>
     </div>
+
+    <div style="margin-top:12px">
+      <label>Quick tools</label>
+      <div class="controls">
+        <button id="copyBtn" class="btn-ghost">Copy Link</button>
+        <button id="qrBtn" class="btn-ghost">QR</button>
+        <button id="copyUrlCmd" class="btn-ghost">Copy URL#</button>
+        <button id="copyGCmd" class="btn-ghost">Copy G#</button>
+      </div>
+    </div>
+
+    <div style="margin-top:12px">
+      <label>Latest position</label>
+      <div class="info" id="infoBox">No position yet.</div>
+      <div class="stat-grid">
+        <div class="stat"><h3 id="spd">—</h3><p>Speed (km/h)</p></div>
+        <div class="stat"><h3 id="alt">—</h3><p>Accuracy / info</p></div>
+        <div class="stat"><h3 id="lastSeen">—</h3><p>Last seen</p></div>
+        <div class="stat"><h3 id="bearing">—</h3><p>Bearing</p></div>
+      </div>
+    </div>
+
+    <div style="margin-top:12px">
+      <label>Route & playback</label>
+      <div class="controls">
+        <button id="exportCsv" class="btn-ghost">Export CSV</button>
+        <button id="showHeat" class="btn-ghost">Heatmap</button>
+        <button id="playPause" class="btn">Play</button>
+        <button id="clearRoute" class="btn-ghost">Clear</button>
+      </div>
+    </div>
+
+    <div style="margin-top:12px">
+      <label>Geofence (simulator)</label>
+      <input id="geoLat" placeholder="lat e.g. 23.7964" />
+      <input id="geoLng" placeholder="lng e.g. 90.4361" style="margin-top:6px" />
+      <div class="row" style="margin-top:8px">
+        <input id="geoRad" placeholder="radius (m)" />
+        <button id="setFence" class="btn-ghost">Set</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button id="testCoords" class="btn-ghost">Test Coords</button>
+      </div>
+    </div>
+
   </div>
 
-  <footer>Made with ♥ — open-source, host on GitHub Pages. Keep your share link private if you want privacy.</footer>
+  <!-- RIGHT: Map + embed -->
+  <div>
+    <div class="card" id="embedArea">
+      <!-- iframe will be set here -->
+      <iframe id="trackerFrame" src="about:blank" sandbox></iframe>
+    </div>
 
-  <!-- optional libraries -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-o9N1j7kY0pMbQYdspaWm4fCq5gk7g6r3v2G6mIsA9Hk=" crossorigin=""></script>
-  <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+    <div id="map" style="margin-top:12px" class="card"></div>
+  </div>
+</div>
 
-  <script>
-    // small utility functions
-    const $ = sel => document.querySelector(sel);
-    const shareInput = $('#shareUrl');
-    const frame = $('#trackerFrame');
-    const statusBadge = $('#statusBadge');
-    const lastPing = $('#lastPing');
+<footer>Tip: Add to Home Screen for quick access • Use responsibly</footer>
 
-    // load default example if none provided (your link)
-    const DEFAULT = 'http://gps.francebangla.net/sharing/3cc72e30b02e2948c35e7c96ba602695';
-    shareInput.value = DEFAULT;
+<!-- libs -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
 
-    document.getElementById('loadBtn').addEventListener('click', ()=>{
-      loadEmbed(shareInput.value.trim());
-    });
+<script>
+/* ===============================
+  CONFIG — এখানে তোমার DEFAULT sharing link বসবে
+   — যদি এই লাইনেই তোমার link বসাতে চাও, বদলে ফেলো
+================================ */
+const DEFAULT_SHARING = 'http://gps.francebangla.net/sharing/3cc72e30b02e2948c35e7c96ba602695';
 
-    document.getElementById('openBtn').addEventListener('click', ()=>{
-      const u = shareInput.value.trim(); if(!u) return alert('Paste the share URL first'); window.open(u,'_blank');
-    });
+/* ===============================
+   App state
+================================ */
+const $ = s => document.querySelector(s);
+const shareInput = $('#shareUrl');
+const frame = $('#trackerFrame');
+const statusBadge = $('#statusBadge');
+const lastPing = $('#lastPing');
+const infoBox = $('#infoBox');
+const spdBox = $('#spd'), altBox = $('#alt'), seenBox = $('#lastSeen'), bearingBox = $('#bearing');
 
-    document.getElementById('copyBtn').addEventListener('click', ()=>{ navigator.clipboard.writeText(shareInput.value.trim()); alert('Copied link to clipboard'); });
+shareInput.value = localStorage.getItem('shareLink') || DEFAULT_SHARING;
 
-    // copy quick commands
-    document.querySelectorAll('.cmd').forEach(b=> b.addEventListener('click', e=>{ const c = e.target.dataset.cmd; navigator.clipboard.writeText(c); alert('Copied: '+c); }));
+/* Map setup */
+const map = L.map('map', {zoomControl:true}).setView([23.7964,90.4361], 14);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:''}).addTo(map);
+let route = []; let marker=null, heatLayer=null, routeLayer=null, fence=null;
+function setMarker(lat,lng, bearing){
+  if(!marker){
+    marker = L.marker([lat,lng], {rotationAngle: bearing||0}).addTo(map);
+  } else{
+    marker.setLatLng([lat,lng]);
+    if(bearing!==undefined && marker.setRotationAngle) try{ marker.setRotationAngle(bearing); }catch(e){}
+  }
+  map.setView([lat,lng], 16);
+}
 
-    // ping link (HEAD) - best-effort
-    async function ping(url){
-      if(!url) return setStatus('No URL','gray');
-      setStatus('Checking...','orange');
-      const t0 = Date.now();
-      try{
-        // try fetch as GET so we can read text and search for coords if server responds
-        const resp = await fetch(url, {mode:'cors'});
-        const took = Date.now()-t0;
-        if(resp.ok){
-          setStatus('Online (CORS ok) - '+took+'ms','green');
-          lastPing.textContent = new Date().toLocaleString();
-          const txt = await resp.text();
-          // try to extract lat/lng pair if google maps link embedded inside (best-effort)
-          const m = txt.match(/q=([NS\d\.\-]+),E?([\d\.\-]+)/i);
-          if(m){
-            const lat = parseFloat(m[1].replace('N',''));
-            const lng = parseFloat(m[2].replace('E',''));
-            showMarker(lat,lng);
-          }
-        } else {
-          setStatus('HTTP '+resp.status,'red');
-        }
-      }catch(err){
-        // usually blocked by CORS or mixed-content
-        console.warn('Ping error',err);
-        setStatus('No CORS / blocked by browser','red');
-        lastPing.textContent = new Date().toLocaleString();
-      }
+/* parse coords from raw HTML/text using patterns */
+function parseCoordsFromText(txt){
+  // try google q=lat,lng
+  let m = txt.match(/[?&]q=([N\d\.\-]+),([E\d\.\-]+)/i) || txt.match(/q=([\d\.\-]+),([\d\.\-]+)/i);
+  if(m){ return {lat: parseFloat(m[1].replace('N','')), lng: parseFloat(m[2].replace('E',''))}; }
+  // try plain lat,lng
+  m = txt.match(/([0-9]{1,2}\.[0-9]+)[,\\s]+([0-9]{1,3}\.[0-9]+)/);
+  if(m){ return {lat: parseFloat(m[1]), lng: parseFloat(m[2])}; }
+  return null;
+}
+
+/* ping (CORS-aware) */
+async function ping(url){
+  if(!url) return setBadge('No URL','gray');
+  setBadge('Checking...','orange');
+  lastPing.textContent = '';
+  try{
+    const resp = await fetch(url, {mode:'cors'});
+    if(resp.ok){
+      setBadge('Online (CORS)','green'); lastPing.textContent = new Date().toLocaleString();
+      const txt = await resp.text();
+      const coords = parseCoordsFromText(txt);
+      if(coords){ onNewPosition(coords.lat, coords.lng); infoBox.textContent = 'Parsed coords (CORS).'; }
+      return true;
+    } else {
+      setBadge('HTTP '+resp.status,'red');
+      return false;
     }
+  }catch(e){
+    // attempt image probe (non-cors)
+    const alive = await probe(url);
+    if(alive){ setBadge('Online (no CORS)','green'); lastPing.textContent = new Date().toLocaleString(); infoBox.textContent='Open-in-new-tab recommended'; }
+    else { setBadge('Offline','red'); infoBox.textContent='Server unreachable'; }
+    return alive;
+  }
+}
 
-    document.getElementById('pingBtn').addEventListener('click', ()=> ping(shareInput.value.trim()));
+function setBadge(text, color){
+  statusBadge.textContent = text;
+  statusBadge.style.background = (color==='green')? 'rgba(0,209,255,0.08)' : (color==='orange'? 'rgba(255,211,0,0.06)' : (color==='red'? 'rgba(255,100,100,0.06)' : 'rgba(255,255,255,0.02)'));
+  statusBadge.style.color = (color==='green')? '#00d1ff' : (color==='red'? '#ff6b6b' : '#ffd166');
+}
 
-    function setStatus(text,color){
-      statusBadge.textContent = text;
-      statusBadge.style.background = (color==='green')? '#e6fbf0' : (color==='red'? '#fff0f0' : (color==='orange'? '#fff7e6' : '#f2f7ff'));
-      statusBadge.style.color = (color==='green')? '#108a4b' : (color==='red'? '#d23' : '#a36f00');
-    }
+// image probe
+function probe(url){ return new Promise(resolve=>{
+  try{
+    const img = new Image();
+    img.onload = ()=> resolve(true);
+    img.onerror = ()=> resolve(false);
+    img.src = url + (url.includes('?')? '&':'?') + '_ping=' + Date.now();
+    setTimeout(()=> resolve(false), 6000);
+  }catch(e){ resolve(false); }
+}); }
 
-    // embed attempts: try to put in iframe, if blocked show fallback
-    function loadEmbed(url){
-      if(!url){ alert('Paste the sharing URL first'); return; }
-      // try embed - some servers and browser protections will block (mixed content or X-Frame-Options)
-      frame.src = url;
-      // short timeout to detect load fail
-      let loaded = false;
-      frame.onload = ()=>{ loaded = true; setStatus('Embedded (loaded)','green'); lastPing.textContent = new Date().toLocaleString(); };
-      setTimeout(()=>{
-        if(!loaded){
-          // fallback: show link box instead of forcing open
-          document.getElementById('embedArea').innerHTML = '<div class="fallback"><p>Embedding blocked — open live map in new tab:</p>'+
-            '<a class="btn" href="'+escapeHtml(url)+'" target="_blank">Open Live Tracker</a></div>';
-          setStatus('Embed blocked (open in new tab)','red');
-        }
-      }, 2000);
-    }
+/* embed + fallback */
+function loadEmbed(u){
+  if(!u){ alert('Paste sharing link first'); return; }
+  localStorage.setItem('shareLink', u);
+  // reset iframe
+  document.getElementById('embedArea').innerHTML = '<iframe id="trackerFrame" src="about:blank" sandbox></iframe>';
+  const ifr = document.getElementById('trackerFrame');
+  let loaded=false;
+  ifr.addEventListener('load', ()=>{ loaded=true; setBadge('Embedded','green'); lastPing.textContent = new Date().toLocaleString(); });
+  try{ ifr.src = u; }catch(e){ console.warn(e); }
+  setTimeout(()=>{ if(!loaded){
+    document.getElementById('embedArea').innerHTML = '<div style="padding:18px;text-align:center"><p class="small">Embedding blocked. Open in new tab:</p><a class="btn" href="'+escapeHtml(u)+'" target="_blank">Open Live Tracker</a></div>';
+    setBadge('Embed blocked','red');
+  } }, 1400);
+}
 
-    // helper for escaping
-    function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+/* extract coords when we get lat/lng and optionally time */
+function onNewPosition(lat,lng, t){
+  // add to route
+  const ts = t || new Date().toISOString();
+  route.push({lat, lng, t:ts});
+  setMarker(lat,lng);
+  seenBox.textContent = new Date(ts).toLocaleString();
+  infoBox.innerHTML = `Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)} <br>Points: ${route.length}`;
+  // calc speed if possible
+  if(route.length>=2){
+    const a = route[route.length-2], b = route[route.length-1];
+    const s = estimateSpeed(a.lat,a.lng,b.lat,b.lng, a.t, b.t); // km/h
+    spdBox.textContent = (s===null)? '—' : s.toFixed(1);
+    bearingBox.textContent = bearing(a.lat,a.lng,b.lat,b.lng).toFixed(0)+'°';
+  }
+  // update route layer
+  if(routeLayer) map.removeLayer(routeLayer);
+  routeLayer = L.polyline(route.map(p=>[p.lat,p.lng]), {color:'#00d1ff', weight:4, opacity:0.8}).addTo(map);
+}
 
-    // Map setup
-    const map = L.map('map').setView([23.7964,90.4361], 14);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
-    let marker = null; let heatLayer = null; let fence = null;
+/* distance & speed helpers */
+function toRad(v){ return v * Math.PI/180; }
+function haversine(lat1,lon1,lat2,lon2){
+  const R=6371; const dLat=toRad(lat2-lat1); const dLon=toRad(lon2-lon1);
+  const a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)*Math.sin(dLon/2);
+  const c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)); return R*c; // km
+}
+function estimateSpeed(lat1,lon1,lat2,lon2,t1,t2){
+  let dt = (new Date(t2).getTime() - new Date(t1).getTime())/1000; // sec
+  if(!isFinite(dt) || dt<=0) return null;
+  const dist = haversine(lat1,lon1,lat2,lon2); // km
+  const v = (dist / (dt/3600)); // km/h
+  if(!isFinite(v)) return null; return v;
+}
+function bearing(lat1,lon1,lat2,lon2){
+  const y = Math.sin(toRad(lon2-lon1))*Math.cos(toRad(lat2));
+  const x = Math.cos(toRad(lat1))*Math.sin(toRad(lat2)) - Math.sin(toRad(lat1))*Math.cos(toRad(lat2))*Math.cos(toRad(lon2-lon1));
+  return ( (Math.atan2(y,x)*180/Math.PI)+360 )%360;
+}
 
-    function showMarker(lat,lng){
-      const pos = [lat,lng];
-      if(!marker){ marker = L.marker(pos).addTo(map); } else { marker.setLatLng(pos); }
-      map.setView(pos,16);
-    }
+/* CSV export */
+function exportCSV(){
+  if(route.length===0){ alert('Route empty'); return; }
+  let csv = 'lat,lng,timestamp\n';
+  route.forEach(r=> csv += `${r.lat},${r.lng},${r.t}\n`);
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'route.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
 
-    document.getElementById('showHeat').addEventListener('click', ()=>{
-      // read csv file if provided
-      const f = document.getElementById('csvFile').files[0];
-      if(!f) return alert('Upload a CSV file first');
-      const reader = new FileReader();
-      reader.onload = e=>{
-        const txt = e.target.result;
-        const rows = txt.split(/\r?\n/).map(r=>r.trim()).filter(Boolean);
-        const pts = rows.map(r=>{ const c = r.split(/[;,\t]/).map(x=>x.trim()); return [parseFloat(c[0]),parseFloat(c[1])]; }).filter(p=>p && !isNaN(p[0]));
-        if(heatLayer) map.removeLayer(heatLayer);
-        heatLayer = L.heatLayer(pts, {radius: 25}).addTo(map);
-        map.fitBounds(L.latLngBounds(pts));
-      };
-      reader.readAsText(f);
-    });
+/* heatmap */
+function showHeat(){
+  if(route.length===0) return alert('No route, collect first (ping/load link).');
+  const pts = route.map(p=>[p.lat,p.lng]);
+  if(heatLayer) map.removeLayer(heatLayer);
+  heatLayer = L.heatLayer(pts, {radius:25}).addTo(map);
+  map.fitBounds(L.latLngBounds(pts));
+}
 
-    document.getElementById('clearMap').addEventListener('click', ()=>{ if(heatLayer) map.removeLayer(heatLayer); if(marker) map.removeLayer(marker); marker=null; heatLayer=null; });
+/* playback */
+let playInterval=null;
+function playPauseToggle(){
+  if(playInterval){ clearInterval(playInterval); playInterval=null; $('#playPause').textContent='Play'; return; }
+  if(route.length===0) return alert('No route to play.');
+  let i=0;
+  $('#playPause').textContent='Pause';
+  playInterval = setInterval(()=>{ if(i>=route.length){ clearInterval(playInterval); playInterval=null; $('#playPause').textContent='Play'; return; } const p=route[i++]; setMarker(p.lat,p.lng); }, 700);
+}
 
-    // geofence
-    document.getElementById('setFence').addEventListener('click', ()=>{
-      const lat = parseFloat($('#geoLat').value); const lng = parseFloat($('#geoLng').value); const r = parseFloat($('#geoRad').value);
-      if(isNaN(lat)||isNaN(lng)||isNaN(r)) return alert('Provide valid numbers');
-      if(fence) map.removeLayer(fence);
-      fence = L.circle([lat,lng],{radius:r,color:'#ff6b6b',fillColor:'#ff6b6b',fillOpacity:0.15}).addTo(map);
-      map.fitBounds(fence.getBounds());
-    });
+/* clear */
+function clearAll(){ if(routeLayer) map.removeLayer(routeLayer); if(heatLayer) map.removeLayer(heatLayer); if(marker) map.removeLayer(marker); route=[]; routeLayer=heatLayer=marker=null; infoBox.textContent='Cleared'; spdBox.textContent='—'; seenBox.textContent='—'; }
 
-    document.getElementById('testCoords').addEventListener('click', ()=>{
-      const lat = parseFloat($('#geoLat').value); const lng = parseFloat($('#geoLng').value);
-      if(isNaN(lat)||isNaN(lng)) return alert('Provide lat/lng');
-      const inside = fence && fence.getBounds().contains([lat,lng]);
-      alert(inside? 'TEST: Coordinates are INSIDE the fence' : 'TEST: Coordinates are OUTSIDE the fence');
-    });
+/* geofence */
+function setFence(){
+  const lat=parseFloat($('#geoLat').value), lng=parseFloat($('#geoLng').value), r=parseFloat($('#geoRad').value);
+  if(isNaN(lat)||isNaN(lng)||isNaN(r)) return alert('Provide valid numbers');
+  if(fence) map.removeLayer(fence);
+  fence = L.circle([lat,lng], {radius:r, color:'#ff6b6b', fillOpacity:0.12}).addTo(map);
+  map.fitBounds(fence.getBounds());
+}
+function testCoords(){
+  const lat=parseFloat($('#geoLat').value), lng=parseFloat($('#geoLng').value);
+  if(isNaN(lat)||isNaN(lng)) return alert('Provide coords');
+  const inside = fence && fence.getBounds().contains([lat,lng]);
+  alert(inside? 'INSIDE fence' : 'OUTSIDE fence');
+}
 
-    // CSV sample helper
-    document.getElementById('csvFile').addEventListener('change', ()=>{
-      // noop
-    });
+/* helpers */
+function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
 
-    // QR code generation using chart.googleapis (simple)
-    document.getElementById('genQR').addEventListener('click', ()=>{
-      const u = shareInput.value.trim(); if(!u) return alert('Paste the sharing URL first');
-      const qr = 'https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl='+encodeURIComponent(u);
-      const w = window.open('', '_blank');
-      w.document.write('<img src="'+qr+'" alt="QR"/>');
-    });
+/* QR generator */
+function openQR(u){ const qr='https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl='+encodeURIComponent(u); window.open(qr,'_blank'); }
 
-    // add home screen tip
-    document.getElementById('addHome').addEventListener('click', ()=>{
-      alert('On Android: Chrome → 3-dots → Add to Home screen.\nOn iPhone: Safari → Share → Add to Home Screen.');
-    });
+/* auto-refresh */
+let autoTimer=null;
+function toggleAuto(on){
+  const btn = $('#toggleAuto');
+  if(on){
+    const sec = parseInt($('#interval').value,10) * 1000;
+    autoTimer = setInterval(()=> { ping( shareInput.value.trim() ); }, sec);
+    btn.textContent = 'Auto: ON';
+    btn.classList.add('btn');
+  } else {
+    clearInterval(autoTimer); autoTimer=null;
+    btn.textContent = 'Auto: OFF';
+  }
+}
 
-    // initial attempt
-    loadEmbed(DEFAULT);
+/* image probe used earlier */
+function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
 
-    // quick ping on load to try extract coords
-    setTimeout(()=> ping(DEFAULT),1200);
-  </script>
+/* event wiring */
+$('#loadBtn').addEventListener('click', ()=> loadEmbed(shareInput.value.trim()));
+$('#openBtn').addEventListener('click', ()=> { const u=shareInput.value.trim(); if(!u) return alert('Paste link'); window.open(u,'_blank'); });
+$('#pingBtn').addEventListener('click', ()=> ping(shareInput.value.trim()));
+$('#copyBtn').addEventListener('click', ()=> { navigator.clipboard.writeText(shareInput.value.trim()); alert('Copied'); });
+$('#qrBtn').addEventListener('click', ()=> openQR(shareInput.value.trim()));
+$('#copyUrlCmd').addEventListener('click', ()=> { navigator.clipboard.writeText('URL#'); alert('Copied URL#'); });
+$('#copyGCmd').addEventListener('click', ()=> { navigator.clipboard.writeText('G#'); alert('Copied G#'); });
+
+$('#exportCsv').addEventListener('click', exportCSV);
+$('#showHeat').addEventListener('click', showHeat);
+$('#playPause').addEventListener('click', playPauseToggle);
+$('#clearRoute').addEventListener('click', clearAll);
+$('#setFence').addEventListener('click', setFence);
+$('#testCoords').addEventListener('click', testCoords);
+
+$('#toggleAuto').addEventListener('click', ()=> { toggleAuto(!autoTimer); });
+
+// load defaults on start
+setTimeout(()=>{ loadEmbed(shareInput.value.trim()); ping(shareInput.value.trim()); }, 700);
+
+/* accessibility: save link on change */
+shareInput.addEventListener('change', ()=> localStorage.setItem('shareLink', shareInput.value.trim()));
+
+</script>
 </body>
 </html>
-
-==== README.md ====
-# Bike Live Tracker — GitHub Pages (single-file)
-
-This repo contains a single-page dashboard you can host on GitHub Pages. The page lets you:
-- Embed your permanent tracking sharing URL from your tracker server.
-- Open the live tracker in a new tab and copy the link.
-- Generate a QR code for quick sharing.
-- Ping the sharing URL to check availability (best-effort CORS).
-- Upload a CSV of coordinates and render a heatmap.
-- Draw a geofence on the map and simulate enter/exit tests.
-
-## Quick deploy (3 steps)
-1. Create a new **public** GitHub repository.
-2. Add `index.html` (from this doc) at the repository root, commit & push.
-3. In the repo settings → Pages → set Source to `main` branch `/ (root)` → Save.
-
-Your site will be available at: `https://<your-username>.github.io/<repo>/` within a minute.
-
-## Notes
-- If your sharing link is `http://` while GitHub Pages is served over `https://`, modern browsers block HTTP content inside an HTTPS page (mixed content). In that case the page will show a fallback and provide an Open-in-new-tab button.
-- If the server sets `X-Frame-Options: DENY`, iframe embedding will also fail — but you can still use the open-in-new-tab flow or deploy a tiny redirect page.
-
-==== .github/workflows/ping.yml ====
-name: Ping Live Tracker
-on:
-  schedule:
-    - cron: '0 * * * *' # hourly
-  workflow_dispatch: {}
-
-jobs:
-  ping:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Curl the sharing link
-        run: |
-          url="http://gps.francebangla.net/sharing/3cc72e30b02e2948c35e7c96ba602695"
-          echo "Pinging $url"
-          curl -I -L --max-time 20 "$url" | sed -n '1,6p'
-
---
-
-<!-- End of document -->
