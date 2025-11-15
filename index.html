@@ -1,0 +1,319 @@
+<!--
+Project: Bike Live Tracker — Single-page GitHub Pages app
+Files included in this single textdoc:
+  1) index.html  (main app)
+  2) README.md   (how to deploy)
+  3) .github/workflows/ping.yml  (optional GitHub Actions to ping the public sharing link)
+
+Copy each section to files in a public GitHub repo and enable GitHub Pages (branch `main`, root) to deploy.
+-->
+
+==== index.html ====
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>My Bike — Live Tracker Dashboard</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-xwE/ZXOtfw7g5wLFp2q3mZb4bK6Nf2xYhS9tQIAkP8o=" crossorigin=""/>
+  <style>
+    :root{--blue:#0b76ef;--muted:#666}
+    html,body,#app{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    header{background:linear-gradient(90deg,var(--blue),#136df0);color:#fff;padding:12px 16px;font-weight:700}
+    .container{display:flex;gap:12px;padding:12px}
+    .col{background:#fff;border-radius:10px;padding:12px;box-shadow:0 6px 18px rgba(10,10,10,0.06)}
+    .left{flex:0 0 420px}
+    .right{flex:1;min-height:520px}
+    label{display:block;font-size:0.85rem;color:var(--muted);margin-top:8px}
+    input[type=text],select{width:100%;padding:8px;border-radius:8px;border:1px solid #e6e9ee}
+    button{background:var(--blue);color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
+    .small{font-size:0.9rem}
+    #trackerFrame{width:100%;height:460px;border-radius:8px;border:1px solid #eee}
+    #map{height:520px;border-radius:8px}
+    .row{display:flex;gap:8px;margin-top:8px}
+    .hint{color:var(--muted);font-size:0.9rem;margin-top:8px}
+    .badge{display:inline-block;padding:6px 8px;border-radius:8px;background:#f2f7ff;color:var(--blue);font-weight:600}
+    footer{padding:10px;text-align:center;color:#666;font-size:0.9rem}
+    .fallback{padding:14px;text-align:center}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .file{border:1px dashed #ddd;padding:8px;border-radius:8px}
+  </style>
+</head>
+<body>
+  <header>My Bike — Live Tracker Dashboard</header>
+
+  <div class="container">
+    <div class="col left">
+      <div>
+        <label>Permanent tracking sharing link</label>
+        <input id="shareUrl" type="text" placeholder="Paste your sharing URL here (example: http://gps.francebangla.net/sharing/...)" />
+        <div class="row">
+          <button id="loadBtn">Load / Embed</button>
+          <button id="openBtn" style="background:#2dbe60">Open in new tab</button>
+          <button id="copyBtn" style="background:#444">Copy link</button>
+        </div>
+        <div class="hint">If the server blocks embedding or your repo is served over HTTPS and the share link is HTTP, the iframe will fall back to an <em>Open in new tab</em> button.</div>
+      </div>
+
+      <div style="margin-top:12px">
+        <label>Status</label>
+        <div class="row">
+          <div class="badge" id="statusBadge">Not checked</div>
+          <div style="flex:1"><small id="lastPing">—</small></div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button id="pingBtn">Ping Link</button>
+          <button id="genQR">Generate QR</button>
+          <button id="addHome">Add to home-screen tip</button>
+        </div>
+      </div>
+
+      <div style="margin-top:12px">
+        <label>Quick Commands (SMS style)</label>
+        <div class="hint small">These are convenience buttons that copy the SMS commands that your tracker understands — send them from your phone to the tracker SIM.</div>
+        <div class="row" style="margin-top:8px">
+          <button data-cmd="URL#" class="cmd">Copy URL#</button>
+          <button data-cmd="G#" class="cmd">Copy G#</button>
+          <button data-cmd="check#" class="cmd">Copy check#</button>
+        </div>
+      </div>
+
+      <div style="margin-top:12px">
+        <label>Upload route CSV (lat,lng,timestamp)</label>
+        <input type="file" id="csvFile" accept="text/csv" />
+        <div class="hint">CSV columns: lat,lng,timestamp (timestamp optional). After upload, click "Show Heatmap".</div>
+        <div class="row" style="margin-top:8px">
+          <button id="showHeat">Show Heatmap</button>
+          <button id="clearMap" style="background:#ff6b6b">Clear</button>
+        </div>
+      </div>
+
+      <div style="margin-top:12px">
+        <label>Geofence simulator</label>
+        <div class="hint small">Draw a circle on the map and use the 'Test coords' button to simulate enter/exit events.</div>
+        <div class="row">
+          <input id="geoLat" type="text" placeholder="lat (e.g. 23.7964)" />
+          <input id="geoLng" type="text" placeholder="lng (e.g. 90.4361)" />
+          <input id="geoRad" type="text" placeholder="radius (meters)" />
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button id="setFence">Set Fence</button>
+          <button id="testCoords">Test Coords</button>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="col right">
+      <div id="embedArea">
+        <iframe id="trackerFrame" src="about:blank" title="Live tracker" sandbox></iframe>
+      </div>
+      <div id="map" style="margin-top:12px"></div>
+    </div>
+  </div>
+
+  <footer>Made with ♥ — open-source, host on GitHub Pages. Keep your share link private if you want privacy.</footer>
+
+  <!-- optional libraries -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-o9N1j7kY0pMbQYdspaWm4fCq5gk7g6r3v2G6mIsA9Hk=" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+
+  <script>
+    // small utility functions
+    const $ = sel => document.querySelector(sel);
+    const shareInput = $('#shareUrl');
+    const frame = $('#trackerFrame');
+    const statusBadge = $('#statusBadge');
+    const lastPing = $('#lastPing');
+
+    // load default example if none provided (your link)
+    const DEFAULT = 'http://gps.francebangla.net/sharing/3cc72e30b02e2948c35e7c96ba602695';
+    shareInput.value = DEFAULT;
+
+    document.getElementById('loadBtn').addEventListener('click', ()=>{
+      loadEmbed(shareInput.value.trim());
+    });
+
+    document.getElementById('openBtn').addEventListener('click', ()=>{
+      const u = shareInput.value.trim(); if(!u) return alert('Paste the share URL first'); window.open(u,'_blank');
+    });
+
+    document.getElementById('copyBtn').addEventListener('click', ()=>{ navigator.clipboard.writeText(shareInput.value.trim()); alert('Copied link to clipboard'); });
+
+    // copy quick commands
+    document.querySelectorAll('.cmd').forEach(b=> b.addEventListener('click', e=>{ const c = e.target.dataset.cmd; navigator.clipboard.writeText(c); alert('Copied: '+c); }));
+
+    // ping link (HEAD) - best-effort
+    async function ping(url){
+      if(!url) return setStatus('No URL','gray');
+      setStatus('Checking...','orange');
+      const t0 = Date.now();
+      try{
+        // try fetch as GET so we can read text and search for coords if server responds
+        const resp = await fetch(url, {mode:'cors'});
+        const took = Date.now()-t0;
+        if(resp.ok){
+          setStatus('Online (CORS ok) - '+took+'ms','green');
+          lastPing.textContent = new Date().toLocaleString();
+          const txt = await resp.text();
+          // try to extract lat/lng pair if google maps link embedded inside (best-effort)
+          const m = txt.match(/q=([NS\d\.\-]+),E?([\d\.\-]+)/i);
+          if(m){
+            const lat = parseFloat(m[1].replace('N',''));
+            const lng = parseFloat(m[2].replace('E',''));
+            showMarker(lat,lng);
+          }
+        } else {
+          setStatus('HTTP '+resp.status,'red');
+        }
+      }catch(err){
+        // usually blocked by CORS or mixed-content
+        console.warn('Ping error',err);
+        setStatus('No CORS / blocked by browser','red');
+        lastPing.textContent = new Date().toLocaleString();
+      }
+    }
+
+    document.getElementById('pingBtn').addEventListener('click', ()=> ping(shareInput.value.trim()));
+
+    function setStatus(text,color){
+      statusBadge.textContent = text;
+      statusBadge.style.background = (color==='green')? '#e6fbf0' : (color==='red'? '#fff0f0' : (color==='orange'? '#fff7e6' : '#f2f7ff'));
+      statusBadge.style.color = (color==='green')? '#108a4b' : (color==='red'? '#d23' : '#a36f00');
+    }
+
+    // embed attempts: try to put in iframe, if blocked show fallback
+    function loadEmbed(url){
+      if(!url){ alert('Paste the sharing URL first'); return; }
+      // try embed - some servers and browser protections will block (mixed content or X-Frame-Options)
+      frame.src = url;
+      // short timeout to detect load fail
+      let loaded = false;
+      frame.onload = ()=>{ loaded = true; setStatus('Embedded (loaded)','green'); lastPing.textContent = new Date().toLocaleString(); };
+      setTimeout(()=>{
+        if(!loaded){
+          // fallback: show link box instead of forcing open
+          document.getElementById('embedArea').innerHTML = '<div class="fallback"><p>Embedding blocked — open live map in new tab:</p>'+
+            '<a class="btn" href="'+escapeHtml(url)+'" target="_blank">Open Live Tracker</a></div>';
+          setStatus('Embed blocked (open in new tab)','red');
+        }
+      }, 2000);
+    }
+
+    // helper for escaping
+    function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    // Map setup
+    const map = L.map('map').setView([23.7964,90.4361], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+    let marker = null; let heatLayer = null; let fence = null;
+
+    function showMarker(lat,lng){
+      const pos = [lat,lng];
+      if(!marker){ marker = L.marker(pos).addTo(map); } else { marker.setLatLng(pos); }
+      map.setView(pos,16);
+    }
+
+    document.getElementById('showHeat').addEventListener('click', ()=>{
+      // read csv file if provided
+      const f = document.getElementById('csvFile').files[0];
+      if(!f) return alert('Upload a CSV file first');
+      const reader = new FileReader();
+      reader.onload = e=>{
+        const txt = e.target.result;
+        const rows = txt.split(/\r?\n/).map(r=>r.trim()).filter(Boolean);
+        const pts = rows.map(r=>{ const c = r.split(/[;,\t]/).map(x=>x.trim()); return [parseFloat(c[0]),parseFloat(c[1])]; }).filter(p=>p && !isNaN(p[0]));
+        if(heatLayer) map.removeLayer(heatLayer);
+        heatLayer = L.heatLayer(pts, {radius: 25}).addTo(map);
+        map.fitBounds(L.latLngBounds(pts));
+      };
+      reader.readAsText(f);
+    });
+
+    document.getElementById('clearMap').addEventListener('click', ()=>{ if(heatLayer) map.removeLayer(heatLayer); if(marker) map.removeLayer(marker); marker=null; heatLayer=null; });
+
+    // geofence
+    document.getElementById('setFence').addEventListener('click', ()=>{
+      const lat = parseFloat($('#geoLat').value); const lng = parseFloat($('#geoLng').value); const r = parseFloat($('#geoRad').value);
+      if(isNaN(lat)||isNaN(lng)||isNaN(r)) return alert('Provide valid numbers');
+      if(fence) map.removeLayer(fence);
+      fence = L.circle([lat,lng],{radius:r,color:'#ff6b6b',fillColor:'#ff6b6b',fillOpacity:0.15}).addTo(map);
+      map.fitBounds(fence.getBounds());
+    });
+
+    document.getElementById('testCoords').addEventListener('click', ()=>{
+      const lat = parseFloat($('#geoLat').value); const lng = parseFloat($('#geoLng').value);
+      if(isNaN(lat)||isNaN(lng)) return alert('Provide lat/lng');
+      const inside = fence && fence.getBounds().contains([lat,lng]);
+      alert(inside? 'TEST: Coordinates are INSIDE the fence' : 'TEST: Coordinates are OUTSIDE the fence');
+    });
+
+    // CSV sample helper
+    document.getElementById('csvFile').addEventListener('change', ()=>{
+      // noop
+    });
+
+    // QR code generation using chart.googleapis (simple)
+    document.getElementById('genQR').addEventListener('click', ()=>{
+      const u = shareInput.value.trim(); if(!u) return alert('Paste the sharing URL first');
+      const qr = 'https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl='+encodeURIComponent(u);
+      const w = window.open('', '_blank');
+      w.document.write('<img src="'+qr+'" alt="QR"/>');
+    });
+
+    // add home screen tip
+    document.getElementById('addHome').addEventListener('click', ()=>{
+      alert('On Android: Chrome → 3-dots → Add to Home screen.\nOn iPhone: Safari → Share → Add to Home Screen.');
+    });
+
+    // initial attempt
+    loadEmbed(DEFAULT);
+
+    // quick ping on load to try extract coords
+    setTimeout(()=> ping(DEFAULT),1200);
+  </script>
+</body>
+</html>
+
+==== README.md ====
+# Bike Live Tracker — GitHub Pages (single-file)
+
+This repo contains a single-page dashboard you can host on GitHub Pages. The page lets you:
+- Embed your permanent tracking sharing URL from your tracker server.
+- Open the live tracker in a new tab and copy the link.
+- Generate a QR code for quick sharing.
+- Ping the sharing URL to check availability (best-effort CORS).
+- Upload a CSV of coordinates and render a heatmap.
+- Draw a geofence on the map and simulate enter/exit tests.
+
+## Quick deploy (3 steps)
+1. Create a new **public** GitHub repository.
+2. Add `index.html` (from this doc) at the repository root, commit & push.
+3. In the repo settings → Pages → set Source to `main` branch `/ (root)` → Save.
+
+Your site will be available at: `https://<your-username>.github.io/<repo>/` within a minute.
+
+## Notes
+- If your sharing link is `http://` while GitHub Pages is served over `https://`, modern browsers block HTTP content inside an HTTPS page (mixed content). In that case the page will show a fallback and provide an Open-in-new-tab button.
+- If the server sets `X-Frame-Options: DENY`, iframe embedding will also fail — but you can still use the open-in-new-tab flow or deploy a tiny redirect page.
+
+==== .github/workflows/ping.yml ====
+name: Ping Live Tracker
+on:
+  schedule:
+    - cron: '0 * * * *' # hourly
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Curl the sharing link
+        run: |
+          url="http://gps.francebangla.net/sharing/3cc72e30b02e2948c35e7c96ba602695"
+          echo "Pinging $url"
+          curl -I -L --max-time 20 "$url" | sed -n '1,6p'
+
+--
+
+<!-- End of document -->
